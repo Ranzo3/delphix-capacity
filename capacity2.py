@@ -547,6 +547,7 @@ if devmode:
     et=""
     startTime=yearAgo.strftime('%Y-%m-%dT%H:%M:%S.000Z')
     endTime=now.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    source_type="MSSqlLinkedSource"
 
 
 if not et:
