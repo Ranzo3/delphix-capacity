@@ -3,17 +3,13 @@
 from typing import Optional, Tuple, List
 import urllib3
 import requests
-import logging
-import os
 import traceback
-import time
-import argparse
 import json
-import numpy as np
 import pandas as pd
 from datetime import datetime
 from datetime import timezone
 from datetime import timedelta
+
 
 
 # CONFIGURATION SECTION
@@ -242,105 +238,6 @@ def get_source_containers(base_url: str, source_type: str=None) -> Tuple[bool, O
 
     return True, containers
 
-
-# %%
-def start_job(base_url: str, auth_key: str, job_id: int, source_connector_id: int = None,
-        target_connector_id: int = None) -> Tuple[bool, Optional[dict]]:
-    
-    '''
-    Start masking jobs
-    '''
-
-    api_url = f"{base_url}/executions"
-    set_authorization(auth_key)
-
-    request_data = dict()
-    request_data["jobId"] = job_id
-    if source_connector_id and target_connector_id:
-        request_data['sourceConnectorId'] = source_connector_id
-        request_data['targetConnectorId'] = target_connector_id
-
-    success, response = post_call(api_url, base_header, request_data=request_data)
-    if not success:
-        
-        return False, None
-    if 'executionId' not in response or 'errorMessage' in response:
-        return False, None
-
-    return True, response["executionId"]
-
-# %%
-
-def get_job_status(base_url :str, auth_key :str, executionId :int=None) -> Tuple[bool, Optional[dict]]:
-    '''
-    Get masking job execution status
-    '''
-
-    set_authorization(auth_key)
-
-    api_url = f"{base_url}/executions/{executionId}"
-    success, response = get_one_call(api_url, base_header)
-    if not success:    
-        return False, None
-    
-    return True, response
-
-# %%
-
-def get_job_id(base_url :str, auth_key :str, job_name: str) -> Tuple[bool, Optional[dict]]:
-    '''
-    Translate job_name into a job_id
-    TODO:
-    support for environement filter as right now it's looking for all jobs across all environments
-    '''
-
-    set_authorization(auth_key)
-    api_url = f"{base_url}/masking-jobs"
-    success, response = get_call(api_url, base_header)
-        
-    if not success:
-        return False, None
-    
-    job_id = [ x["maskingJobId"] for x in response if x["jobName"] == job_name ]
-
-    if len(job_id) < 1:
-        return False, "Job not found"
-
-    if len(job_id) > 1:
-        return False, "Job name not unique"
-    
-    return True, job_id[0]
-
-# %%
-
-def wait_for_job(exec_id=None):
-    """
-    This procedure should implement wait for running masking job functionality
-    and finish with status of the job - SUCCESS or FAILURE
-    """
-
-    while True:
-        status, execution_job = get_job_status(base_url, auth_key, executionId=exec_id)
-
-        if not status:
-            
-            # as job may not be started yet - wait and try again 
-            time.sleep(30)
-            status, execution_job = get_job_status(base_url, auth_key, executionId=exec_id)
-            if not status:
-                
-                return False, f"Can't read execution for ID : {exec_id}", f"Can't read execution for ID : {exec_id}"
-        
-        ret_status = execution_job["status"]
-        
-        if ret_status in ["CANCELLED", "FAILED"]:
-            
-            return False, ret_status, None
-        elif ret_status == "SUCCEEDED":
-            return True, ret_status, execution_job
-        else:
-            
-            time.sleep(5)
 
 
 # %%
