@@ -6,6 +6,7 @@ import requests
 import traceback
 import json
 import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import datetime
 from datetime import timezone
 from datetime import timedelta
@@ -466,9 +467,12 @@ ret_status, containers = get_source_containers(base_url, source_type=source_type
 #%%
 topContainers = getTopContainers(containers,topn)
 # %%
-ret_status, datagrid = processCapHistory(topContainers, et=endTime, st=startTime)
+ret_status, dataframe = processCapHistory(topContainers, et=endTime, st=startTime)
 
-datagrid.to_csv(output_file)
+dataframe.to_csv(output_file)
+
+#dataframe.plot(x="timestamp",y="actualSpace")
+#dataframe.plot.bar(stacked=True)
 
 print("Wrote File: ",output_file)
 
